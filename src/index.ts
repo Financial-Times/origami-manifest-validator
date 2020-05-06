@@ -1,5 +1,7 @@
 import {promises as fs} from "fs"
-import {resolve as resolvePath} from "path"
+import {
+	basename,
+	resolve as resolvePath} from "path"
 import {TestingLevel} from "./lib/testing-level"
 import type {Rule, RuleExtras} from "./lib/rule"
 
@@ -11,28 +13,43 @@ enum RuleState {
 	skip,
 }
 
+let usage = `Usage: ${process.argv[1]} [--clippy] [path to project or origami.json]`
+
 ;(async function run() {
 	console.log("TAP version 13")
 
 	let manifest: object
 	let args = process.argv.slice(2)
 	let opts = args.filter(arg => arg.startsWith("-"))
-	let filename = args.filter(arg => !arg.startsWith("-"))[0]
+	let root = args.filter(arg => !arg.startsWith("-"))[0] || "."
 	let testLevel = opts.includes("--clippy")
 		? TestingLevel.Clippy
 		: TestingLevel.Normal
 	let rules = await fs.readdir(resolvePath(__dirname, "rules"))
 
-	if (!filename) {
-		console.log("Bail out!")
-		console.error(`Usage: ${process.argv[1]} [--clippy] <origami.json>`)
-		// ENOTRECOVERABLE
-		process.exit(131)
+	async function findManifest (file = ".") {
+		let stats = await fs.stat(file).catch(error => {
+			console.log(`Bail out! No such file ${file}`)
+			console.error(usage)
+			// ENOTRECOVERABLE
+			process.exit(131)
+		})
+
+		if (stats.isFile()) {
+			return file
+		}
+
+		if (stats.isDirectory()) {
+			return findManifest(resolvePath(file, "origami.json"))
+		}
 	}
+
+	let filename = await findManifest(root)
 
 	let manifestFile = await fs.readFile(filename, "utf-8").catch(error => {
 		console.log(`Bail out! Could not read file ${filename}`)
 		console.error(error)
+		console.error(usage)
 		process.stderr.write(`\n\n`)
 		process.exit(131)
 	})

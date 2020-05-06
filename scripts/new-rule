@@ -2,7 +2,7 @@
 name="$1"
 cat > ./src/rules/"$name.ts" <<EOF
 import type {Rule} from "../lib/rule"
-import skips from "../lib/skips"
+import * as skips from "../lib/skips"
 
 let rules: Rule[] = [
 	{

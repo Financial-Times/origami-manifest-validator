@@ -1,5 +1,5 @@
 import type {Rule} from "../lib/rule"
-import * as skips from "./skips"
+import * as skips from "../lib/skips"
 
 let brands = [
 	"master",
@@ -19,7 +19,7 @@ let rules: Rule[] = [
 		skip: value => {
 			return Array.isArray(value) ? false : "not an array"
 		},
-		rule: `must not have any values other than:\n\t${brands.join(" ")}`,
+		rule: `must not have any values other than: ${brands.join(" ")}`,
 		test: value => {
 			return value.reduce((valid, item) => {
 				return valid && brands.includes(item)

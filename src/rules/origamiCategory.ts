@@ -10,7 +10,7 @@ let categories = [
 
 let rules: Rule[] = [
 	{
-		rule: `components must have a category from: \n\t${categories.join(" ")}`,
+		rule: `component category must be one of: ${categories.join(" ")}`,
 		skip: skips.unlessComponent,
 		test: value => categories.includes(value),
 	},
