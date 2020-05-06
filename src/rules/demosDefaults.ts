@@ -5,6 +5,12 @@ import {
 	dirname,
 	resolve as resolvePath} from "path"
 
+let unlessComponentOrUndefined = (field: string) => (demosDefaults, level, extras) => {
+	let isUndefined = demosDefaults === undefined ? "is undefined" : false
+	let fieldIsUndefined = demosDefaults && demosDefaults[field] === undefined ? `${field} is undefined` : false
+	return isUndefined || fieldIsUndefined || skips.unlessComponent(demosDefaults, level, extras)
+}
+
 let rules: Rule[] = [
 	{
 		rule: "only applies to components",
@@ -12,17 +18,16 @@ let rules: Rule[] = [
 		test: value => value === undefined
 	},
 	{
-		rule: "`template` must be a string",
-		skip: skips.unlessComponent,
+		rule: "`template` must be a string or undefined",
+		skip: unlessComponentOrUndefined("template"),
 		test: demosDefaults => typeof demosDefaults.template == "string",
 	},
 	{
 		rule: "`template` point at an existing file",
-		skip: skips.unlessComponent,
+		skip: unlessComponentOrUndefined("template"),
 		test: async (demosDefaults, _level, extras) => {
 			if (typeof demosDefaults.template == "string") {
-				let projectRoot = dirname(extras.manifestFilename)
-				return fs.stat(resolvePath(projectRoot, demosDefaults.template))
+				return fs.stat(resolvePath(extras.root, demosDefaults.template))
 					.then(() => true)
 					.catch(() => false)
 			} else {

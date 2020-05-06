@@ -1,10 +1,9 @@
 import type {TestingLevel} from "./testing-level"
-import * as skips from "./skips"
-
 export interface RuleExtras {
 	manifest: object
 	manifestFilename: string
 	environment: object
+	root: string
 }
 
 export interface Rule {

@@ -1,6 +1,6 @@
 import {promises as fs} from "fs"
 import {
-	basename,
+	dirname as getDirname,
 	resolve as resolvePath} from "path"
 import {TestingLevel} from "./lib/testing-level"
 import type {Rule, RuleExtras} from "./lib/rule"
@@ -21,7 +21,7 @@ let usage = `Usage: ${process.argv[1]} [--clippy] [path to project or origami.js
 	let manifest: object
 	let args = process.argv.slice(2)
 	let opts = args.filter(arg => arg.startsWith("-"))
-	let root = args.filter(arg => !arg.startsWith("-"))[0] || "."
+	let rootOption = args.filter(arg => !arg.startsWith("-"))[0] || "."
 	let testLevel = opts.includes("--clippy")
 		? TestingLevel.Clippy
 		: TestingLevel.Normal
@@ -44,7 +44,8 @@ let usage = `Usage: ${process.argv[1]} [--clippy] [path to project or origami.js
 		}
 	}
 
-	let filename = await findManifest(root)
+	let filename = await findManifest(rootOption)
+	let root = getDirname(filename)
 
 	let manifestFile = await fs.readFile(filename, "utf-8").catch(error => {
 		console.log(`Bail out! Could not read file ${filename}`)
@@ -70,6 +71,7 @@ let usage = `Usage: ${process.argv[1]} [--clippy] [path to project or origami.js
 		manifest,
 		manifestFilename: filename,
 		environment: environmentVariables,
+		root
 	}
 
 	for (let rule of rules) {
