@@ -1,0 +1,10 @@
+{
+	"compilerOptions": {
+		"outDir": "./built",
+	l},
+	"include": [
+		"./src/**/*"
+	],
+	"lib": "es2019",
+	"module": "commonjs"
+}
