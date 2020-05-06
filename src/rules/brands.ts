@@ -1,4 +1,5 @@
 import type {Rule} from "../lib/rule"
+import * as skips from "./skips"
 
 let brands = [
 	"master",
@@ -9,6 +10,7 @@ let brands = [
 let rules: Rule[] = [
 	{
 		rule: `must be an array if component supports brands`,
+		skip: skips.unlessComponent,
 		test: value => {
 			return Array.isArray(value) || value == null
 		}
@@ -17,22 +19,12 @@ let rules: Rule[] = [
 		skip: value => {
 			return Array.isArray(value) ? false : "not an array"
 		},
-		rule: `must not have any values other than:\n\t${brands.join("\n\t")}`,
+		rule: `must not have any values other than:\n\t${brands.join(" ")}`,
 		test: value => {
 			return value.reduce((valid, item) => {
 				return valid && brands.includes(item)
 			}, true)
 		}
-	},
-	{
-		skip: () => "CHECK IF O-BRAND IS USED IN DEMOS ETC",
-		test: () => false,
-		rule: "must include all used brands"
-	},
-	{
-		skip: () => "CHECK IF O-BRAND IS USED IN SASS???",
-		test: () => false,
-		rule: "must include all used brands"
 	}
 ]
 

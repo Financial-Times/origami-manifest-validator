@@ -1,10 +1,10 @@
-import clippyTest from "../lib/clippy-test"
 import type {Rule} from "../lib/rule"
+import {unlessClippy} from "../lib/skips"
 
 let rules: Rule[] = [
 	{
 		rule: "should be an array",
-		skip: clippyTest,
+		skip: unlessClippy,
 		test: Array.isArray
 	},
 	{

@@ -22,18 +22,17 @@ let rules: Rule[] = [
 	},
 	{
 		rule: "'module' can be 'component' now",
-		skip: (_value, level: TestingLevel) => {
+		skip: (value, level: TestingLevel) => {
 			if (level != TestingLevel.Clippy) {
-				return "(clippy test)"
+				return "clippy test"
+			}
+			if (value != "module") {
+				return "origamiType is not `module`"
 			}
 		},
-		test: (value) => {
-			if (value == "module") {
-				// this clippy test should fail if the value is module
-				return false
-			} else {
-				return true
-			}
+		test() {
+			// if this passes the skips, it's a fail
+			return false
 		},
 	},
 ]

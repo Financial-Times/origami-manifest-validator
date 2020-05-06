@@ -1,14 +1,14 @@
 #!/bin/sh
 name="$1"
-cat > ./src/rules/"$name.js" <<EOF
+cat > ./src/rules/"$name.ts" <<EOF
 import type {Rule} from "../lib/rule"
-import clippyTest from "../lib/clippy-test"
+import skips from "../lib/skips"
 
 let rules: Rule[] = [
 	{
 		rule: "",
-		skip: clippyTest,
-		test: (value) => {
+		skip: skips.unlessClippy,
+		test: value => {
 			 // return true if it passes, false if it fails
 			 return true || false
 		},

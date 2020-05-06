@@ -8,10 +8,10 @@ let environmentVariables = process.env
 enum RuleState {
 	ok,
 	notok,
-	skip
+	skip,
 }
 
-(async function run() {
+;(async function run() {
 	console.log("TAP version 13")
 
 	let manifest: object
@@ -63,14 +63,29 @@ enum RuleState {
 			if (check.skip) {
 				let skippedReason = check.skip(manifest[ruleName], testLevel, extras)
 				if (skippedReason) {
-					results.push([RuleState.skip, ruleName, skippedReason])
+					results.push([
+						RuleState.skip,
+						`(${skippedReason}) ${ruleName}`,
+						check.rule,
+					])
 					continue
 				}
 			}
 			// Let them see their value, the testing level and some other
 			// info they might want
 			let result = check.test(manifest[ruleName], testLevel, extras)
-			results.push([result ? RuleState.ok : RuleState.notok, ruleName, check.rule])
+			if (typeof result == "boolean") {
+				result = result
+			} else if (result.then) {
+				result = await result
+			} else {
+				throw new Error(`got unexpected result ${result}`)
+			}
+			results.push([
+				result ? RuleState.ok : RuleState.notok,
+				ruleName,
+				check.rule,
+			])
 		}
 	}
 
@@ -90,15 +105,18 @@ enum RuleState {
 	}
 
 	console.log(`1..${results.length + 1}`)
-	let rule = "all keys are specified"
 	if (extraKeys.length) {
-		results.push([
-			RuleState.ok,
-			rule,
-			[`the manifest at ${filename} has these unspecified keys:\n\t${extraKeys.join("\n\t")}`],
+		results.unshift([
+			RuleState.notok,
+			"",
+			[
+				`the manifest at ${filename} has these unspecified keys:\n\t${extraKeys.join(
+					"\n\t"
+				)}`,
+			],
 		])
 	} else {
-		results.push([RuleState.notok, rule])
+		results.unshift([RuleState.ok, "all keys are specified"])
 	}
 
 	results.forEach((result, index) => {
@@ -109,8 +127,14 @@ enum RuleState {
 			console.log(`ok ${index + 1} # skip ${ruleName}: ${message}`)
 		} else if (state == RuleState.notok) {
 			exitCode = 1
+			let help = `\n\tCheck https://origami.ft.com/spec/v1/manifest/${ruleName} for help`
+			let json = JSON.stringify(manifest[ruleName], null, "\t")
+			json = json.replace(/^/g, "\t")
+			let received = ruleName.length
+				? `\n\tgot "${json}`
+				: ""
 			console.log(
-				`not ok ${index + 1} ${ruleName}: ${message}\n\tCheck https://origami.ft.com/spec/v1/manifest/${ruleName} for help`
+				`not ok ${index + 1} ${ruleName}: ${message}${received}${help}`
 			)
 		}
 	})
