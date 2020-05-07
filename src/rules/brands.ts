@@ -1,5 +1,6 @@
 import type {Rule} from "../lib/rule"
-import * as skips from "../lib/skips"
+import {FieldType} from "../lib/field"
+import * as skips from "../lib/skip"
 
 let brands = [
 	"master",
@@ -21,11 +22,14 @@ let rules: Rule[] = [
 		},
 		rule: `must not have any values other than: ${brands.join(" ")}`,
 		test: value => {
-			return value.reduce((valid, item) => {
+			return value.reduce((valid: boolean, item: string) => {
 				return valid && brands.includes(item)
 			}, true)
 		}
 	}
 ]
 
-export default rules
+export default {
+	type: FieldType.Direct,
+	rules
+}

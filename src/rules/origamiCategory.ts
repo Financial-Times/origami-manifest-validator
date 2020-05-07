@@ -1,5 +1,6 @@
 import type {Rule} from "../lib/rule"
-import * as skips from "../lib/skips"
+import {FieldType} from "../lib/field"
+import * as skips from "../lib/skip"
 
 let categories = [
 	"components",
@@ -21,4 +22,7 @@ let rules: Rule[] = [
 	},
 ]
 
-export default rules
+export default {
+	type: FieldType.Direct,
+	rules
+}

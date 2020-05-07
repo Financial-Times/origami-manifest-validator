@@ -2,7 +2,8 @@
 name="$1"
 cat > ./src/rules/"$name.ts" <<EOF
 import type {Rule} from "../lib/rule"
-import * as skips from "../lib/skips"
+import {FieldType} from "../lib/field"
+import * as skips from "../lib/skip"
 
 let rules: Rule[] = [
 	{
@@ -15,5 +16,8 @@ let rules: Rule[] = [
 	},
 ]
 
-export default rules
+export default {
+	type: FieldType.Direct,
+	rules
+}
 EOF

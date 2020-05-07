@@ -1,6 +1,7 @@
 import type {Rule} from "../lib/rule"
-import * as skips from "../lib/skips"
+import * as skips from "../lib/skip"
 import * as polyfillLibrary from "polyfill-library"
+import {FieldType} from "../lib/field"
 
 let features: string[]
 
@@ -24,6 +25,9 @@ async function checkArrayContainsOnlyPolyfillFeatures (array: string[]) {
 	return true
 }
 
+let unlessComponentOrUndefined = (value, extras) =>
+	value === undefined ? "not present" : skips.unlessComponent(value, extras)
+
 let rules: Rule[] = [
 	{
 		rule: "must not be present unless project is component",
@@ -32,7 +36,7 @@ let rules: Rule[] = [
 	},
 	{
 		rule: "must only contain keys 'required' and 'optional'",
-		skip: skips.unlessComponent,
+		skip: unlessComponentOrUndefined,
 		test: browserFeatures => {
 			let keys = Object.keys(browserFeatures)
 			for (let key of keys) {
@@ -46,7 +50,7 @@ let rules: Rule[] = [
 	},
 	{
 		rule: "required and optional contain only valid polyfill.io features",
-		skip: skips.unlessComponent,
+		skip: unlessComponentOrUndefined,
 		test: async browserFeatures => {
 			let requiredValid = browserFeatures.required === undefined || await checkArrayContainsOnlyPolyfillFeatures(browserFeatures.required)
 			let optionalValid = browserFeatures.optional === undefined || await checkArrayContainsOnlyPolyfillFeatures(browserFeatures.optional)
@@ -55,4 +59,7 @@ let rules: Rule[] = [
 	},
 ]
 
-export default rules
+export default {
+	type: FieldType.Direct,
+	rules
+}

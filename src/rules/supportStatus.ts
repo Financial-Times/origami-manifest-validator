@@ -1,4 +1,5 @@
 import type {Rule} from "../lib/rule"
+import {FieldType} from "../lib/field"
 
 let statuses = ["active", "maintained", "deprecated", "dead", "experimental"]
 
@@ -9,4 +10,7 @@ let rules: Rule[] = [
 	},
 ]
 
-export default rules
+export default {
+	type: FieldType.Direct,
+	rules
+}

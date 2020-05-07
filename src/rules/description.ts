@@ -1,4 +1,5 @@
 import type {Rule} from "../lib/rule"
+import {FieldType} from "../lib/field"
 
 let rules: Rule[] = [
 	{
@@ -15,4 +16,7 @@ let rules: Rule[] = [
 	},
 ]
 
-export default rules
+export default {
+	type: FieldType.Direct,
+	rules
+}

@@ -1,5 +1,6 @@
 import {TestingLevel} from "../lib/testing-level"
 import type {Rule} from "../lib/rule"
+import {FieldType} from "../lib/field"
 
 let origamiTypes = [
 	"component",
@@ -22,8 +23,8 @@ let rules: Rule[] = [
 	},
 	{
 		rule: "'module' can be 'component' now",
-		skip: (value, level: TestingLevel) => {
-			if (level != TestingLevel.Clippy) {
+		skip: (value, extras) => {
+			if (extras.testingLevel != TestingLevel.Clippy) {
 				return "clippy test"
 			}
 			if (value != "module") {
@@ -37,4 +38,7 @@ let rules: Rule[] = [
 	},
 ]
 
-export default rules
+export default {
+	type: FieldType.Direct,
+	rules
+}
