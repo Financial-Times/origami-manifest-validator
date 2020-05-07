@@ -1,6 +1,7 @@
 import {TestingLevel} from "../lib/testing-level"
 import type {Rule} from "../lib/rule"
 import {FieldType} from "../lib/field"
+import * as Rules from "../lib/rule"
 
 let origamiTypes = [
 	"component",
@@ -17,6 +18,7 @@ let origamiTypes = [
 ]
 
 let rules: Rule[] = [
+	...Rules.isRequired,
 	{
 		rule: `must be one of: ${origamiTypes.join(" ")}or null`,
 		test: value => origamiTypes.includes(value),

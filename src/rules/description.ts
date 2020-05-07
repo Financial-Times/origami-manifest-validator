@@ -1,5 +1,6 @@
 import type {Rule} from "../lib/rule"
 import {FieldType} from "../lib/field"
+import * as Rules from "../lib/rule"
 
 let rules: Rule[] = [
 	{
@@ -8,11 +9,11 @@ let rules: Rule[] = [
 	},
 	{
 		rule: "must not be an empty string",
-		test: value => value && value.length > 0,
+		test: value => Boolean(value && value.length > 0)
 	},
 	{
 		rule: "must be short",
-		test: value => value && value.length < 200,
+		test: value => Boolean(value && value.length < 200),
 	},
 ]
 

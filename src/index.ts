@@ -19,7 +19,9 @@ enum RuleState {
 
 let usage = `Usage: ${process.argv[1]} [--clippy] [path to project or origami.json]`
 
-async function* processRules(rules: Rule[], fieldName: string, value: any, extras: RuleExtras) {
+type RuleResult = [RuleState, string, string, any]
+
+async function* processRules(rules: Rule[], fieldName: string, value: any, extras: RuleExtras): AsyncGenerator<RuleResult> {
 	for (let rule of rules) {
 		if (typeof rule.skip == "function") {
 			let skippedReason = rule.skip(value, extras)
@@ -38,10 +40,10 @@ async function* processRules(rules: Rule[], fieldName: string, value: any, extra
 		let result = rule.test(value, extras)
 		if (typeof result == "boolean") {
 			result = result
-		} else if (result.then) {
+		} else if (result && result.then) {
 			result = await result
 		} else {
-			throw new Error(`got unexpected result ${result}`)
+			throw new Error(`got unexpected result ${result} for ${fieldName}`)
 		}
 		yield [
 			result ? RuleState.ok : RuleState.notok,
@@ -52,7 +54,12 @@ async function* processRules(rules: Rule[], fieldName: string, value: any, extra
 	}
 }
 
-async function* processExtraKeys(fieldFiles: string[], context: any) {
+async function* processExtraKeys(
+	fieldFiles: string[],
+	context: any,
+	parentFieldName?: string,
+	arrayIndex?: number
+): AsyncGenerator<RuleResult> {
 	let contextKeys = Object.keys(context)
 
 	let extraKeys = []
@@ -63,23 +70,36 @@ async function* processExtraKeys(fieldFiles: string[], context: any) {
 		}
 	}
 
+	let message = "all keys were provided are covered by the origami.json spec"
+	if (parentFieldName != null) {
+		message += ` for "${parentFieldName}"`
+	}
+	if (arrayIndex != null) {
+		message += ` item ${arrayIndex}`
+	}
+	message += ":\n\t"
+
 	if (extraKeys.length) {
-		// TODO improve this output for subfields
 		yield [
 			RuleState.notok,
-			"",
-			[
-				`unspecified keys:\n\t`,
-			],
+			parentFieldName || "",
+			message,
 			extraKeys
 		]
 	} else {
-		yield [RuleState.ok, "", "all keys are specified", ""]
+		yield [RuleState.ok, parentFieldName || "", message, ""]
 	}
 }
 
-async function* processFieldFiles(fieldFiles: string[], root: string, context: any, extras: RuleExtras) {
-	yield* processExtraKeys(fieldFiles, context)
+async function* processFieldFiles(
+	fieldFiles: string[],
+	root: string,
+	context: any,
+	extras: RuleExtras,
+	parentFieldName?: string,
+	arrayIndex?: number
+): AsyncGenerator<RuleResult> {
+	yield* processExtraKeys(fieldFiles, context, parentFieldName, arrayIndex)
 
 	for (let fieldFile of fieldFiles) {
 		let field: Field = require(`${root}/${fieldFile}`).default
@@ -87,7 +107,9 @@ async function* processFieldFiles(fieldFiles: string[], root: string, context: a
 
 		let value = context[fieldName]
 
-		yield* processRules(field.rules, fieldName, value, extras)
+		let fqfn = `${parentFieldName||""}${arrayIndex ? `[${arrayIndex}]` : ""}${parentFieldName ? "." : ""}${fieldName}`
+
+		yield* processRules(field.rules, fqfn, value, extras)
 
 		if (field.type == FieldType.Direct) {
 			// we're done
@@ -107,8 +129,8 @@ async function* processFieldFiles(fieldFiles: string[], root: string, context: a
 			// TODO throw an error if this folder doesn't exist
 			let root = resolvePath(__dirname, "rules", fieldName)
 			let subfields = await getFiles(root)
-			yield* processFieldFiles(subfields, root, context[fieldName], extras)
-		} else if (field.type == FieldType.Each) {
+			yield* processFieldFiles(subfields, root, context[fieldName], extras, fieldName)
+		} else if (field.type == FieldType.EachRecurse) {
 			let list = context[fieldName]
 			if (!list) {
 				// TODO don't skip required arrays (there currently are none like this)
@@ -120,9 +142,11 @@ async function* processFieldFiles(fieldFiles: string[], root: string, context: a
 				]
 				continue
 			}
+			// TODO throw an error if this folder doesn't exist
+			let root = resolvePath(__dirname, "rules", fieldName)
+			let subfields = await getFiles(root)
 			for (let index in list) {
-				let value = list[index]
-				yield* processRules(field.rules, fieldName + `[${index}]`, value, extras)
+				yield* processFieldFiles(subfields, root, list[index], extras, fieldName, Number(index))
 			}
 		} else {
 			// @ts-ignore for your own good. (i know it's `never` to YOU, but who
@@ -220,10 +244,10 @@ async function* processFieldFiles(fieldFiles: string[], root: string, context: a
 		} else if (state == RuleState.notok) {
 			exitCode = 1
 			// TODO fix this for subfields
-			let help = `\n\tCheck https://origami.ft.com/spec/v1/manifest/${ruleName} for help`
+			let help = `\n\tCheck https://origami.ft.com/spec/v1/manifest/#${ruleName} for help`
 			let json = JSON.stringify(value, null, "\t")
 			json = json ? json.replace(/^/gm, "\t\t") : "undefined"
-			let received = ruleName.length
+			let received = json
 				? `\n\tgot '''\n${json}\n\t    '''`
 				: ""
 			process.stdout.write(

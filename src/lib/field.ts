@@ -5,8 +5,10 @@ export enum FieldType {
 	Direct,
 	// for objects where you'd like to have rules for each field
 	Recurse,
-	// for arrays where you'd like to process each item with the rules
-	Each
+	// for arrays where you'd like to process each item with rules for each field
+	EachRecurse,
+	// for arrays where you'd like to process each item with rules
+	// Each
 }
 
 interface RuleField {
@@ -15,18 +17,15 @@ interface RuleField {
 }
 
 export interface DirectField extends RuleField {
-	type: FieldType.Direct,
-	rules: Rule[]
+	type: FieldType.Direct
 }
 
 export interface RecurseField extends RuleField {
-	type: FieldType.Recurse,
-	fields: Promise<FieldMap>
+	type: FieldType.Recurse
 }
 
 export interface EachField extends RuleField {
-	type: FieldType.Each,
-	each: Rule[]
+	type: FieldType.EachRecurse
 }
 
 export type FieldMap = {
